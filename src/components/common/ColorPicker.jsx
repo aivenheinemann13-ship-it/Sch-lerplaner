@@ -6,16 +6,14 @@ export function ColorPicker({ value, onChange }) {
   const [showCustom, setShowCustom] = useState(false);
   const [customColor, setCustomColor] = useState(value);
   const [hue, setHue] = useState(0);
-  const [saturation, setSaturation] = useState(100);
   const [lightness, setLightness] = useState(50);
   const canvasRef = useRef(null);
 
-  // Update customColor when hue/sat/light changes
+  // Update customColor when hue/lightness changes
   useEffect(() => {
-    const hex = hslToHex(hue, saturation, lightness);
+    const hex = hslToHex(hue, 100, lightness);
     setCustomColor(hex);
-    onChange(hex);
-  }, [hue, saturation, lightness]);
+  }, [hue, lightness]);
 
   // Parse initial color to get HSL values
   useEffect(() => {
@@ -23,12 +21,11 @@ export function ColorPicker({ value, onChange }) {
       const rgb = hexToRgb(value);
       const [h, s, l] = rgbToHsl(rgb[0], rgb[1], rgb[2]);
       setHue(h);
-      setSaturation(s);
       setLightness(l);
     }
   }, [showCustom]);
 
-  const pickColorFromWheel = (x, y) => {
+  const pickHueFromWheel = (x, y) => {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
@@ -39,22 +36,14 @@ export function ColorPicker({ value, onChange }) {
     const dx = x - centerX;
     const dy = y - centerY;
     const distance = Math.sqrt(dx * dx + dy * dy);
-    const maxDistance = radius;
 
-    // Map distance to saturation (center = 0%, edge = 100%)
-    const newSaturation = Math.min(100, (distance / maxDistance) * 100);
-
-    // Map angle to hue (0-360)
-    const angle = Math.atan2(dy, dx) * (180 / Math.PI) + 90;
-    const newHue = (angle + 360) % 360;
-
-    // Lightness - use same calculation as canvas drawing for consistency
-    // Gradually decreases from center to edge for depth
-    const newLightness = 50 + (1 - distance / maxDistance) * 20;
-
-    setHue(newHue);
-    setSaturation(newSaturation);
-    setLightness(newLightness);
+    // Only pick if within the circle
+    if (distance <= radius && distance > radius * 0.3) {
+      const angle = Math.atan2(dy, dx) * (180 / Math.PI) + 90;
+      const newHue = (angle + 360) % 360;
+      setHue(newHue);
+      onChange(hslToHex(newHue, 100, lightness));
+    }
   };
 
   const handleCanvasInteraction = (e) => {
@@ -76,7 +65,7 @@ export function ColorPicker({ value, onChange }) {
       y = e.clientY - rect.top;
     }
 
-    pickColorFromWheel(x, y);
+    pickHueFromWheel(x, y);
   };
 
   const drawColorWheel = () => {
@@ -86,12 +75,13 @@ export function ColorPicker({ value, onChange }) {
     const ctx = canvas.getContext("2d");
     const centerX = canvas.width / 2;
     const centerY = canvas.height / 2;
-    const radius = Math.min(centerX, centerY) - 12;
+    const outerRadius = Math.min(centerX, centerY) - 12;
+    const innerRadius = outerRadius * 0.35;
+    const ringWidth = outerRadius - innerRadius;
 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    // Draw color wheel with smooth gradient
-    // Distance from center = Saturation, Angle = Hue
+    // Draw hue ring (only hue changes, saturation and lightness are fixed)
     const imageData = ctx.createImageData(canvas.width, canvas.height);
     const data = imageData.data;
 
@@ -101,18 +91,14 @@ export function ColorPicker({ value, onChange }) {
         const dy = py - centerY;
         const distance = Math.sqrt(dx * dx + dy * dy);
 
-        if (distance <= radius) {
-          // Calculate angle (Hue)
+        // Only paint in the ring area
+        if (distance >= innerRadius && distance <= outerRadius) {
+          // Calculate hue from angle
           const angle = Math.atan2(dy, dx) * (180 / Math.PI) + 90;
           const wheelHue = (angle + 360) % 360;
 
-          // Calculate saturation based on distance
-          const wheelSaturation = (distance / radius) * 100;
-
-          // Lightness gradually decreases from center to edge for depth
-          const wheelLightness = 50 + (1 - distance / radius) * 20;
-
-          const [r, g, b] = hslToRgb(wheelHue, wheelSaturation, wheelLightness);
+          // Full saturation, use current lightness
+          const [r, g, b] = hslToRgb(wheelHue, 100, lightness);
 
           const idx = (py * canvas.width + px) * 4;
           data[idx] = r;
@@ -125,30 +111,36 @@ export function ColorPicker({ value, onChange }) {
 
     ctx.putImageData(imageData, 0, 0);
 
-    // Draw position indicator for current selection
-    const selectedDistance = (saturation / 100) * radius;
-    const selectedAngle = (hue - 90) * (Math.PI / 180);
-    const indicatorX = centerX + Math.cos(selectedAngle) * selectedDistance;
-    const indicatorY = centerY + Math.sin(selectedAngle) * selectedDistance;
+    // Draw indicator for current hue
+    const hueRad = (hue - 90) * (Math.PI / 180);
+    const indicatorRadius = (innerRadius + outerRadius) / 2;
+    const indicatorX = centerX + Math.cos(hueRad) * indicatorRadius;
+    const indicatorY = centerY + Math.sin(hueRad) * indicatorRadius;
 
-    // Draw indicator circle
+    // Outer white ring
     ctx.strokeStyle = "rgba(255,255,255,0.95)";
-    ctx.lineWidth = 3;
+    ctx.lineWidth = 4;
     ctx.beginPath();
-    ctx.arc(indicatorX, indicatorY, 8, 0, Math.PI * 2);
+    ctx.arc(indicatorX, indicatorY, 10, 0, Math.PI * 2);
     ctx.stroke();
 
-    ctx.strokeStyle = "rgba(0,0,0,0.4)";
-    ctx.lineWidth = 1;
-    ctx.beginPath();
-    ctx.arc(indicatorX, indicatorY, 8, 0, Math.PI * 2);
-    ctx.stroke();
-
-    // Draw circle border
-    ctx.strokeStyle = "rgba(255,255,255,0.3)";
+    // Inner dark ring
+    ctx.strokeStyle = "rgba(0,0,0,0.3)";
     ctx.lineWidth = 2;
     ctx.beginPath();
-    ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
+    ctx.arc(indicatorX, indicatorY, 10, 0, Math.PI * 2);
+    ctx.stroke();
+
+    // Draw outer border
+    ctx.strokeStyle = "rgba(255,255,255,0.2)";
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.arc(centerX, centerY, outerRadius, 0, Math.PI * 2);
+    ctx.stroke();
+
+    // Draw inner border
+    ctx.beginPath();
+    ctx.arc(centerX, centerY, innerRadius, 0, Math.PI * 2);
     ctx.stroke();
   };
 
@@ -156,7 +148,13 @@ export function ColorPicker({ value, onChange }) {
     if (showCustom) {
       setTimeout(drawColorWheel, 0);
     }
-  }, [showCustom, hue, saturation, lightness]);
+  }, [showCustom, hue, lightness]);
+
+  const handleAccept = () => {
+    const finalHex = hslToHex(hue, 100, lightness);
+    onChange(finalHex);
+    setShowCustom(false);
+  };
 
   return (
     <div className="color-picker">
@@ -188,6 +186,8 @@ export function ColorPicker({ value, onChange }) {
 
       {showCustom && (
         <div className="color-picker__custom">
+          <h3 className="color-picker__title">EIGENE FARBE</h3>
+
           <div className="color-picker__wheel-container">
             <canvas
               ref={canvasRef}
@@ -198,48 +198,52 @@ export function ColorPicker({ value, onChange }) {
               onTouchStart={handleCanvasInteraction}
               onTouchMove={handleCanvasInteraction}
               className="color-picker__wheel"
-              title="Tippe oder wische um Farbe zu wählen"
+              title="Ziehe um Farbton zu wählen"
             />
           </div>
 
           <div className="color-picker__brightness-slider">
-            <label>Helligkeit</label>
+            <label>HELLIGKEIT</label>
             <input
               type="range"
               min="0"
               max="100"
               value={lightness}
-              onChange={(e) => setLightness(Number(e.target.value))}
+              onChange={(e) => {
+                const newLight = Number(e.target.value);
+                setLightness(newLight);
+                onChange(hslToHex(hue, 100, newLight));
+              }}
               className="color-picker__slider"
               style={{
-                background: `linear-gradient(to right, hsl(${hue}, ${saturation}%, 0%), hsl(${hue}, ${saturation}%, 50%), hsl(${hue}, ${saturation}%, 100%))`
+                background: `linear-gradient(to right, hsl(${hue}, 100%, 0%), hsl(${hue}, 100%, 50%), hsl(${hue}, 100%, 100%))`
               }}
             />
-            <span>{Math.round(lightness)}%</span>
           </div>
 
-          <div className="color-picker__input-group">
-            <label>Hex:</label>
-            <input
-              type="text"
-              value={customColor}
-              onChange={(e) => {
-                const hex = e.target.value;
-                if (/^#[0-9A-F]{6}$/i.test(hex)) {
-                  const rgb = hexToRgb(hex);
-                  const [h, s, l] = rgbToHsl(rgb[0], rgb[1], rgb[2]);
-                  setHue(h);
-                  setSaturation(s);
-                  setLightness(l);
-                }
-              }}
-              placeholder="#RRGGBB"
-              maxLength={7}
-            />
+          <div className="color-picker__info">
             <div
               className="color-picker__preview"
               style={{ background: customColor }}
             />
+            <span className="color-picker__hex">{customColor}</span>
+          </div>
+
+          <div className="color-picker__buttons">
+            <button
+              type="button"
+              className="color-picker__button color-picker__button--cancel"
+              onClick={() => setShowCustom(false)}
+            >
+              ABBRECHEN
+            </button>
+            <button
+              type="button"
+              className="color-picker__button color-picker__button--accept"
+              onClick={handleAccept}
+            >
+              ÜBERNEHMEN
+            </button>
           </div>
         </div>
       )}
