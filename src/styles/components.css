@@ -346,36 +346,37 @@
   border-radius: var(--radius-md);
   align-items: center;
 }
-.color-picker__wheel {
-  width: 220px;
-  height: 220px;
-  cursor: crosshair;
-  border-radius: 50%;
-  box-shadow: var(--shadow-sm);
-  display: block;
-  margin: 0 auto;
-}
 
-.color-picker__sliders {
+.color-picker__wheel-container {
   width: 100%;
   display: flex;
-  flex-direction: column;
-  gap: 10px;
+  justify-content: center;
+  align-items: center;
 }
 
-.color-picker__slider-group {
+.color-picker__wheel {
+  width: 240px;
+  height: 240px;
+  cursor: crosshair;
+  border-radius: 50%;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  display: block;
+}
+
+.color-picker__brightness-slider {
+  width: 100%;
   display: flex;
   flex-direction: column;
   gap: 6px;
 }
 
-.color-picker__slider-group label {
+.color-picker__brightness-slider label {
   font-size: 12px;
   font-weight: 600;
   color: var(--text);
 }
 
-.color-picker__slider-group span {
+.color-picker__brightness-slider span {
   font-size: 11px;
   color: var(--text-muted);
   text-align: right;

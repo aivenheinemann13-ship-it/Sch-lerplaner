@@ -28,23 +28,34 @@ export function ColorPicker({ value, onChange }) {
     }
   }, [showCustom]);
 
-  const pickHueFromCanvas = (x, y) => {
+  const pickColorFromWheel = (x, y) => {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
     const centerX = canvas.width / 2;
     const centerY = canvas.height / 2;
-    const radius = Math.min(centerX, centerY) - 8;
+    const radius = Math.min(centerX, centerY) - 12;
 
     const dx = x - centerX;
     const dy = y - centerY;
     const distance = Math.sqrt(dx * dx + dy * dy);
+    const maxDistance = radius;
 
-    if (distance <= radius) {
-      const angle = Math.atan2(dy, dx) * (180 / Math.PI) + 90;
-      const newHue = (angle + 360) % 360;
-      setHue(newHue);
-    }
+    // Map distance to saturation (center = 0%, edge = 100%)
+    const newSaturation = Math.min(100, (distance / maxDistance) * 100);
+
+    // Map angle to hue (0-360)
+    const angle = Math.atan2(dy, dx) * (180 / Math.PI) + 90;
+    const newHue = (angle + 360) % 360;
+
+    // Lightness is slightly adjusted based on saturation
+    // Higher saturation = slightly brighter for visual appeal
+    const baseLightness = 50;
+    const newLightness = Math.max(30, Math.min(70, baseLightness + (100 - newSaturation) * 0.1));
+
+    setHue(newHue);
+    setSaturation(newSaturation);
+    setLightness(newLightness);
   };
 
   const handleCanvasInteraction = (e) => {
@@ -63,7 +74,7 @@ export function ColorPicker({ value, onChange }) {
       y = e.clientY - rect.top;
     }
 
-    pickHueFromCanvas(x, y);
+    pickColorFromWheel(x, y);
   };
 
   const drawColorWheel = () => {
@@ -73,28 +84,35 @@ export function ColorPicker({ value, onChange }) {
     const ctx = canvas.getContext("2d");
     const centerX = canvas.width / 2;
     const centerY = canvas.height / 2;
-    const radius = Math.min(centerX, centerY) - 8;
+    const radius = Math.min(centerX, centerY) - 12;
 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    // Draw hue wheel (constant saturation and lightness)
+    // Draw color wheel with smooth gradient
+    // Distance from center = Saturation, Angle = Hue
     const imageData = ctx.createImageData(canvas.width, canvas.height);
     const data = imageData.data;
 
-    for (let y = 0; y < canvas.height; y++) {
-      for (let x = 0; x < canvas.width; x++) {
-        const dx = x - centerX;
-        const dy = y - centerY;
+    for (let py = 0; py < canvas.height; py++) {
+      for (let px = 0; px < canvas.width; px++) {
+        const dx = px - centerX;
+        const dy = py - centerY;
         const distance = Math.sqrt(dx * dx + dy * dy);
 
         if (distance <= radius) {
+          // Calculate angle (Hue)
           const angle = Math.atan2(dy, dx) * (180 / Math.PI) + 90;
           const wheelHue = (angle + 360) % 360;
 
-          // Use current saturation and lightness from sliders
-          const [r, g, b] = hslToRgb(wheelHue, saturation, lightness);
+          // Calculate saturation based on distance
+          const wheelSaturation = (distance / radius) * 100;
 
-          const idx = (y * canvas.width + x) * 4;
+          // Lightness gradually decreases from center to edge for depth
+          const wheelLightness = 50 + (1 - distance / radius) * 20;
+
+          const [r, g, b] = hslToRgb(wheelHue, wheelSaturation, wheelLightness);
+
+          const idx = (py * canvas.width + px) * 4;
           data[idx] = r;
           data[idx + 1] = g;
           data[idx + 2] = b;
@@ -105,21 +123,23 @@ export function ColorPicker({ value, onChange }) {
 
     ctx.putImageData(imageData, 0, 0);
 
-    // Draw center indicator for current hue
-    const hueRad = (hue - 90) * (Math.PI / 180);
-    const indicatorX = centerX + Math.cos(hueRad) * (radius * 0.85);
-    const indicatorY = centerY + Math.sin(hueRad) * (radius * 0.85);
+    // Draw position indicator for current selection
+    const selectedDistance = (saturation / 100) * radius;
+    const selectedAngle = (hue - 90) * (Math.PI / 180);
+    const indicatorX = centerX + Math.cos(selectedAngle) * selectedDistance;
+    const indicatorY = centerY + Math.sin(selectedAngle) * selectedDistance;
 
-    ctx.strokeStyle = "rgba(255,255,255,0.9)";
+    // Draw indicator circle
+    ctx.strokeStyle = "rgba(255,255,255,0.95)";
     ctx.lineWidth = 3;
     ctx.beginPath();
-    ctx.arc(indicatorX, indicatorY, 7, 0, Math.PI * 2);
+    ctx.arc(indicatorX, indicatorY, 8, 0, Math.PI * 2);
     ctx.stroke();
 
-    ctx.strokeStyle = "rgba(0,0,0,0.5)";
+    ctx.strokeStyle = "rgba(0,0,0,0.4)";
     ctx.lineWidth = 1;
     ctx.beginPath();
-    ctx.arc(indicatorX, indicatorY, 7, 0, Math.PI * 2);
+    ctx.arc(indicatorX, indicatorY, 8, 0, Math.PI * 2);
     ctx.stroke();
 
     // Draw circle border
@@ -166,50 +186,34 @@ export function ColorPicker({ value, onChange }) {
 
       {showCustom && (
         <div className="color-picker__custom">
-          <canvas
-            ref={canvasRef}
-            width={220}
-            height={220}
-            onMouseDown={handleCanvasInteraction}
-            onMouseMove={handleCanvasInteraction}
-            onTouchStart={handleCanvasInteraction}
-            onTouchMove={handleCanvasInteraction}
-            className="color-picker__wheel"
-            title="Tippe oder wische um Farbton zu wählen"
-          />
+          <div className="color-picker__wheel-container">
+            <canvas
+              ref={canvasRef}
+              width={240}
+              height={240}
+              onMouseDown={handleCanvasInteraction}
+              onMouseMove={handleCanvasInteraction}
+              onTouchStart={handleCanvasInteraction}
+              onTouchMove={handleCanvasInteraction}
+              className="color-picker__wheel"
+              title="Tippe oder wische um Farbe zu wählen"
+            />
+          </div>
 
-          <div className="color-picker__sliders">
-            <div className="color-picker__slider-group">
-              <label>Sättigung</label>
-              <input
-                type="range"
-                min="0"
-                max="100"
-                value={saturation}
-                onChange={(e) => setSaturation(Number(e.target.value))}
-                className="color-picker__slider"
-                style={{
-                  background: `linear-gradient(to right, hsl(${hue}, 0%, ${lightness}%), hsl(${hue}, 100%, ${lightness}%))`
-                }}
-              />
-              <span>{Math.round(saturation)}%</span>
-            </div>
-
-            <div className="color-picker__slider-group">
-              <label>Helligkeit</label>
-              <input
-                type="range"
-                min="0"
-                max="100"
-                value={lightness}
-                onChange={(e) => setLightness(Number(e.target.value))}
-                className="color-picker__slider"
-                style={{
-                  background: `linear-gradient(to right, hsl(${hue}, ${saturation}%, 0%), hsl(${hue}, ${saturation}%, 50%), hsl(${hue}, ${saturation}%, 100%))`
-                }}
-              />
-              <span>{Math.round(lightness)}%</span>
-            </div>
+          <div className="color-picker__brightness-slider">
+            <label>Helligkeit</label>
+            <input
+              type="range"
+              min="0"
+              max="100"
+              value={lightness}
+              onChange={(e) => setLightness(Number(e.target.value))}
+              className="color-picker__slider"
+              style={{
+                background: `linear-gradient(to right, hsl(${hue}, ${saturation}%, 0%), hsl(${hue}, ${saturation}%, 50%), hsl(${hue}, ${saturation}%, 100%))`
+              }}
+            />
+            <span>{Math.round(lightness)}%</span>
           </div>
 
           <div className="color-picker__input-group">
