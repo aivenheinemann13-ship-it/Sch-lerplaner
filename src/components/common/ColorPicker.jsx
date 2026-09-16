@@ -7,11 +7,9 @@ export function ColorPicker({ value, onChange }) {
   const [customColor, setCustomColor] = useState(value);
   const canvasRef = useRef(null);
 
-  const handleCanvasClick = (e) => {
+  const pickColor = (x, y) => {
     const canvas = canvasRef.current;
-    const rect = canvas.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
+    if (!canvas) return;
 
     const centerX = canvas.width / 2;
     const centerY = canvas.height / 2;
@@ -25,13 +23,32 @@ export function ColorPicker({ value, onChange }) {
       const angle = Math.atan2(dy, dx) * (180 / Math.PI) + 90;
       const hue = (angle + 360) % 360;
 
-      const lightness = distance / radius;
+      const lightness = (distance / radius) * 25;
       const saturation = 100;
 
-      const hex = hslToHex(hue, saturation, 50 + lightness * 25);
+      const hex = hslToHex(hue, saturation, 50 + lightness);
       setCustomColor(hex);
       onChange(hex);
     }
+  };
+
+  const handleCanvasInteraction = (e) => {
+    if (e.touches) e.preventDefault();
+
+    const canvas = canvasRef.current;
+    const rect = canvas.getBoundingClientRect();
+
+    let x, y;
+    if (e.touches) {
+      x = e.touches[0].clientX - rect.left;
+      y = e.touches[0].clientY - rect.top;
+    } else {
+      if (e.type === "mousemove" && e.buttons === 0) return;
+      x = e.clientX - rect.left;
+      y = e.clientY - rect.top;
+    }
+
+    pickColor(x, y);
   };
 
   const handleHexInput = (e) => {
@@ -53,21 +70,34 @@ export function ColorPicker({ value, onChange }) {
 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    for (let angle = 0; angle < 360; angle += 2) {
-      for (let r = 0; r < radius; r += 2) {
-        const rad = ((angle - 90) * Math.PI) / 180;
-        const x = centerX + r * Math.cos(rad);
-        const y = centerY + r * Math.sin(rad);
+    const imageData = ctx.createImageData(canvas.width, canvas.height);
+    const data = imageData.data;
 
-        const lightness = 50 + (r / radius) * 25;
-        const color = `hsl(${angle}, 100%, ${lightness}%)`;
+    for (let y = 0; y < canvas.height; y++) {
+      for (let x = 0; x < canvas.width; x++) {
+        const dx = x - centerX;
+        const dy = y - centerY;
+        const distance = Math.sqrt(dx * dx + dy * dy);
 
-        ctx.fillStyle = color;
-        ctx.fillRect(x, y, 2, 2);
+        if (distance <= radius) {
+          const angle = Math.atan2(dy, dx) * (180 / Math.PI) + 90;
+          const hue = (angle + 360) % 360;
+          const lightness = 50 + (distance / radius) * 25;
+
+          const [r, g, b] = hslToRgb(hue, 100, lightness);
+
+          const idx = (y * canvas.width + x) * 4;
+          data[idx] = r;
+          data[idx + 1] = g;
+          data[idx + 2] = b;
+          data[idx + 3] = 255;
+        }
       }
     }
 
-    ctx.strokeStyle = "rgba(255,255,255,0.3)";
+    ctx.putImageData(imageData, 0, 0);
+
+    ctx.strokeStyle = "rgba(255,255,255,0.2)";
     ctx.lineWidth = 1;
     ctx.beginPath();
     ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
@@ -114,9 +144,12 @@ export function ColorPicker({ value, onChange }) {
             ref={canvasRef}
             width={200}
             height={200}
-            onClick={handleCanvasClick}
+            onMouseDown={handleCanvasInteraction}
+            onMouseMove={handleCanvasInteraction}
+            onTouchStart={handleCanvasInteraction}
+            onTouchMove={handleCanvasInteraction}
             className="color-picker__wheel"
-            title="Klick auf das Farbrad um eine Farbe zu wählen"
+            title="Tippe oder wische um eine Farbe zu wählen"
           />
           <div className="color-picker__input-group">
             <label>Hex:</label>
@@ -138,7 +171,7 @@ export function ColorPicker({ value, onChange }) {
   );
 }
 
-function hslToHex(h, s, l) {
+function hslToRgb(h, s, l) {
   const c = ((100 - Math.abs(2 * l - 100)) * s) / 100;
   const x = (c * (1 - Math.abs(((h / 60) % 2) - 1)));
   const m = l / 100 - c / 2;
@@ -151,8 +184,17 @@ function hslToHex(h, s, l) {
   else if (h < 300) [r, g, b] = [x, 0, c];
   else [r, g, b] = [c, 0, x];
 
+  return [
+    Math.round((r + m) * 255),
+    Math.round((g + m) * 255),
+    Math.round((b + m) * 255),
+  ];
+}
+
+function hslToHex(h, s, l) {
+  const [r, g, b] = hslToRgb(h, s, l);
   const toHex = (n) => {
-    const hex = Math.round((n + m) * 255).toString(16);
+    const hex = n.toString(16);
     return hex.length === 1 ? "0" + hex : hex;
   };
 
