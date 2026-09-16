@@ -34,38 +34,17 @@ export function AppearanceSection() {
           <strong>Akzentfarbe</strong>
           <p className="muted">Wähle deine Lieblingsfarbe für die App.</p>
         </div>
-        <div className="accent-picker">
-          {ACCENT_COLORS.map((color) => (
-            <button
-              key={color}
-              className={`accent-swatch ${accentColor === color ? "accent-swatch--active" : ""}`}
-              style={{ background: ACCENT_HEX[color] }}
-              onClick={() => setAccentColor(color)}
-              aria-label={ACCENT_LABELS[color]}
-            />
-          ))}
-          <button
-            className={`accent-swatch accent-swatch--custom ${isCustomColor ? "accent-swatch--active" : ""}`}
-            style={{ background: currentColor }}
-            onClick={() => setShowColorPicker(!showColorPicker)}
-            title="Eigene Farbe wählen"
-          >
-            +
-          </button>
-        </div>
       </div>
 
-      {showColorPicker && (
-        <div className="settings-row settings-row--nested">
-          <ColorPicker
-            value={accentColorCustom}
-            onChange={(color) => {
-              setAccentColorCustom(color);
-              setAccentColor("custom");
-            }}
-          />
-        </div>
-      )}
+      <div className="settings-row settings-row--nested">
+        <ColorPicker
+          value={accentColorCustom}
+          onChange={(color) => {
+            setAccentColorCustom(color);
+            setAccentColor("custom");
+          }}
+        />
+      </div>
 
       <div className="settings-row">
         <div>
