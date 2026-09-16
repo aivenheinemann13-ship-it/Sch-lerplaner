@@ -48,10 +48,9 @@ export function ColorPicker({ value, onChange }) {
     const angle = Math.atan2(dy, dx) * (180 / Math.PI) + 90;
     const newHue = (angle + 360) % 360;
 
-    // Lightness is slightly adjusted based on saturation
-    // Higher saturation = slightly brighter for visual appeal
-    const baseLightness = 50;
-    const newLightness = Math.max(30, Math.min(70, baseLightness + (100 - newSaturation) * 0.1));
+    // Lightness - use same calculation as canvas drawing for consistency
+    // Gradually decreases from center to edge for depth
+    const newLightness = 50 + (1 - distance / maxDistance) * 20;
 
     setHue(newHue);
     setSaturation(newSaturation);
@@ -59,7 +58,10 @@ export function ColorPicker({ value, onChange }) {
   };
 
   const handleCanvasInteraction = (e) => {
-    if (e.touches) e.preventDefault();
+    if (e.touches) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
 
     const canvas = canvasRef.current;
     const rect = canvas.getBoundingClientRect();
