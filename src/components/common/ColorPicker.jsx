@@ -74,7 +74,11 @@ export function ColorPicker({ value, onChange }) {
     ctx.stroke();
   };
 
-  useEffect(drawColorWheel, []);
+  useEffect(() => {
+    if (showCustom) {
+      setTimeout(drawColorWheel, 0);
+    }
+  }, [showCustom]);
 
   return (
     <div className="color-picker">
