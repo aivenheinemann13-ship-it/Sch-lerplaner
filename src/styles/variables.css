@@ -1,0 +1,79 @@
+:root {
+  --bg: #f4f5f8;
+  --bg-elevated: #ffffff;
+  --surface: #ffffff;
+  --surface-hover: #f0f1f5;
+  --border: #e6e8ee;
+  --text: #171922;
+  --text-muted: #6b7280;
+  --text-faint: #9aa0ac;
+
+  --success: #22c55e;
+  --success-bg: rgba(34, 197, 94, 0.12);
+  --warning: #f59e0b;
+  --warning-bg: rgba(245, 158, 11, 0.14);
+  --danger: #ef4444;
+  --danger-bg: rgba(239, 68, 68, 0.12);
+  --info: #3b82f6;
+  --info-bg: rgba(59, 130, 246, 0.12);
+
+  --accent-blau: #3b82f6;
+  --accent-violett: #8b5cf6;
+  --accent-gruen: #16a34a;
+  --accent-rot: #ef4444;
+  --accent-orange: #f97316;
+  --accent: var(--accent-blau);
+  --accent-bg: rgba(59, 130, 246, 0.12);
+  --accent-fg: #ffffff;
+
+  --radius-sm: 8px;
+  --radius-md: 14px;
+  --radius-lg: 20px;
+  --shadow-sm: 0 1px 2px rgba(20, 22, 30, 0.05);
+  --shadow-md: 0 6px 20px rgba(20, 22, 30, 0.07);
+  --shadow-lg: 0 16px 40px rgba(20, 22, 30, 0.12);
+
+  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
+  --sidebar-width: 248px;
+  --topbar-height: 64px;
+}
+
+:root[data-theme="dark"] {
+  --bg: #12131a;
+  --bg-elevated: #1a1c25;
+  --surface: #1a1c25;
+  --surface-hover: #22242f;
+  --border: #2a2c38;
+  --text: #f1f2f6;
+  --text-muted: #9aa0b0;
+  --text-faint: #6b7280;
+
+  --success-bg: rgba(34, 197, 94, 0.18);
+  --warning-bg: rgba(245, 158, 11, 0.2);
+  --danger-bg: rgba(239, 68, 68, 0.18);
+  --info-bg: rgba(59, 130, 246, 0.2);
+  --accent-bg: rgba(59, 130, 246, 0.2);
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 6px 20px rgba(0, 0, 0, 0.35);
+  --shadow-lg: 0 16px 40px rgba(0, 0, 0, 0.5);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #12131a;
+    --bg-elevated: #1a1c25;
+    --surface: #1a1c25;
+    --surface-hover: #22242f;
+    --border: #2a2c38;
+    --text: #f1f2f6;
+    --text-muted: #9aa0b0;
+    --text-faint: #6b7280;
+  }
+}
+
+:root[data-accent="blau"] { --accent: var(--accent-blau); --accent-bg: rgba(59, 130, 246, 0.14); }
+:root[data-accent="violett"] { --accent: var(--accent-violett); --accent-bg: rgba(139, 92, 246, 0.14); }
+:root[data-accent="gruen"] { --accent: var(--accent-gruen); --accent-bg: rgba(22, 163, 74, 0.14); }
+:root[data-accent="rot"] { --accent: var(--accent-rot); --accent-bg: rgba(239, 68, 68, 0.14); }
+:root[data-accent="orange"] { --accent: var(--accent-orange); --accent-bg: rgba(249, 115, 22, 0.14); }
