@@ -245,6 +245,7 @@ export function defaultSettings() {
   return {
     darkMode: false,
     accentColor: "blau",
+    accentColorCustom: "#3b82f6",
     animationsEnabled: true,
     klassenstufe: "",
     schulname: "",

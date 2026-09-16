@@ -449,6 +449,17 @@
   border-bottom: 1px solid var(--border);
 }
 .settings-row:last-child { border-bottom: none; }
+.settings-row--nested {
+  justify-content: center;
+  padding: 20px 0;
+  border-bottom: none;
+}
+.settings-row--nested .color-picker {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
 .accent-picker { display: flex; gap: 8px; }
 .accent-swatch {
   width: 28px;

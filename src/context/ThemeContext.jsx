@@ -5,7 +5,7 @@ const ThemeContext = createContext(null);
 
 export function ThemeProvider({ children }) {
   const { state, actions } = useAppData();
-  const { darkMode, accentColor, animationsEnabled } = state.settings;
+  const { darkMode, accentColor, accentColorCustom, animationsEnabled } = state.settings;
 
   useEffect(() => {
     document.documentElement.dataset.theme = darkMode ? "dark" : "light";
@@ -13,7 +13,11 @@ export function ThemeProvider({ children }) {
 
   useEffect(() => {
     document.documentElement.dataset.accent = accentColor;
-  }, [accentColor]);
+    if (accentColor === "custom" && accentColorCustom) {
+      document.documentElement.style.setProperty("--accent", accentColorCustom);
+      document.documentElement.style.setProperty("--accent-bg", accentColorCustom + "15");
+    }
+  }, [accentColor, accentColorCustom]);
 
   useEffect(() => {
     document.documentElement.dataset.animations = animationsEnabled ? "on" : "off";
@@ -22,9 +26,11 @@ export function ThemeProvider({ children }) {
   const value = {
     darkMode,
     accentColor,
+    accentColorCustom,
     animationsEnabled,
     toggleDarkMode: () => actions.updateSettings({ darkMode: !darkMode }),
     setAccentColor: (color) => actions.updateSettings({ accentColor: color }),
+    setAccentColorCustom: (color) => actions.updateSettings({ accentColorCustom: color }),
     toggleAnimations: () => actions.updateSettings({ animationsEnabled: !animationsEnabled }),
   };
 

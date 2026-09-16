@@ -1,5 +1,7 @@
+import { useState } from "react";
 import { Moon, Sun } from "lucide-react";
 import { Card } from "../../components/common/Card.jsx";
+import { ColorPicker } from "../../components/common/ColorPicker.jsx";
 import { useTheme } from "../../context/ThemeContext.jsx";
 import { ACCENT_COLORS } from "../../data/schema.js";
 
@@ -7,7 +9,11 @@ const ACCENT_LABELS = { blau: "Blau", violett: "Violett", gruen: "Grün", rot: "
 const ACCENT_HEX = { blau: "#3b82f6", violett: "#8b5cf6", gruen: "#22c55e", rot: "#ef4444", orange: "#f97316" };
 
 export function AppearanceSection() {
-  const { darkMode, toggleDarkMode, accentColor, setAccentColor, animationsEnabled, toggleAnimations } = useTheme();
+  const { darkMode, toggleDarkMode, accentColor, accentColorCustom, setAccentColor, setAccentColorCustom, animationsEnabled, toggleAnimations } = useTheme();
+  const [showColorPicker, setShowColorPicker] = useState(false);
+
+  const isCustomColor = accentColor === "custom";
+  const currentColor = isCustomColor ? accentColorCustom : ACCENT_HEX[accentColor];
 
   return (
     <Card>
@@ -38,8 +44,28 @@ export function AppearanceSection() {
               aria-label={ACCENT_LABELS[color]}
             />
           ))}
+          <button
+            className={`accent-swatch accent-swatch--custom ${isCustomColor ? "accent-swatch--active" : ""}`}
+            style={{ background: currentColor }}
+            onClick={() => setShowColorPicker(!showColorPicker)}
+            title="Eigene Farbe wählen"
+          >
+            +
+          </button>
         </div>
       </div>
+
+      {showColorPicker && (
+        <div className="settings-row settings-row--nested">
+          <ColorPicker
+            value={accentColorCustom}
+            onChange={(color) => {
+              setAccentColorCustom(color);
+              setAccentColor("custom");
+            }}
+          />
+        </div>
+      )}
 
       <div className="settings-row">
         <div>
