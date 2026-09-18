@@ -14,8 +14,7 @@
   flex-direction: column;
   gap: 6px;
   height: 100vh;
-  position: sticky;
-  top: 0;
+  overflow: hidden;
 }
 
 .sidebar__brand {
@@ -33,6 +32,8 @@
   flex-direction: column;
   gap: 3px;
   overflow-y: auto;
+  overflow-x: hidden;
+  flex: 1;
 }
 
 .sidebar__link {
