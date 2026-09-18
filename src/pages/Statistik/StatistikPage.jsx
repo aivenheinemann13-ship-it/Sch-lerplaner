@@ -55,7 +55,9 @@ export function StatistikPage() {
             <p className="muted">Noch keine Noten.</p>
           ) : (
             <BarChart
-              data={subjectAverages.map((s) => ({ label: s.subject.abbreviation || s.subject.name, value: s.average, color: s.subject.color }))}
+              data={subjectAverages
+                .sort((a, b) => a.average - b.average)
+                .map((s) => ({ label: s.subject.abbreviation || s.subject.name, value: s.average, color: s.subject.color }))}
               yMin={1}
               yMax={6}
               invertY
