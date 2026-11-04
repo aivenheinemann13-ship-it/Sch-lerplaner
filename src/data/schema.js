@@ -243,7 +243,7 @@ export function createDocument(overrides = {}) {
 
 export function defaultSettings() {
   return {
-    darkMode: false,
+    darkMode: true,
     accentColor: "blau",
     accentColorCustom: "#3b82f6",
     animationsEnabled: true,

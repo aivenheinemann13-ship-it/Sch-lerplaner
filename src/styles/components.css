@@ -584,7 +584,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #fff;
+  color: var(--accent-fg);
   flex-shrink: 0;
   transition: background-color 0.15s ease, border-color 0.15s ease;
 }
@@ -629,7 +629,7 @@
   margin-right: auto;
   z-index: 1;
   position: relative;
-  color: #fff;
+  color: var(--accent-fg);
 }
 
 /* ============ Simple list ============ */
