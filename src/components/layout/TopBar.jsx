@@ -1,12 +1,10 @@
-import { Search, Moon, Sun, Menu } from "lucide-react";
+import { Search, Menu } from "lucide-react";
 import { useSearch } from "../../context/SearchContext.jsx";
-import { useTheme } from "../../context/ThemeContext.jsx";
 import { NAV_ITEMS } from "../../router/routes.js";
 import { useRouter } from "../../router/Router.jsx";
 
 export function TopBar({ onOpenMobileMenu }) {
   const { openSearch } = useSearch();
-  const { darkMode, toggleDarkMode } = useTheme();
   const { route } = useRouter();
   const current = NAV_ITEMS.find((i) => i.route === route);
 
@@ -21,9 +19,6 @@ export function TopBar({ onOpenMobileMenu }) {
           <Search size={16} />
           <span>Suche…</span>
           <kbd>Strg K</kbd>
-        </button>
-        <button className="icon-button" onClick={toggleDarkMode} aria-label="Darstellung umschalten">
-          {darkMode ? <Sun size={19} /> : <Moon size={19} />}
         </button>
       </div>
     </header>
